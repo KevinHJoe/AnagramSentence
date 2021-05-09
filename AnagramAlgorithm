@@ -1,0 +1,199 @@
+// anagram program 0.2.cpp : This file contains the 'main' function.Program execution begins and ends there.
+//
+
+#include "pch.h"
+#include <iostream>
+#include <time.h>
+#include <string>
+#include <vector>
+#include <fstream>
+using namespace std;
+
+int randGen(int);
+vector<string> wordSeperator();
+string randNewList(vector<string>);
+vector<string> truncator(string, string, int, vector<string>);
+
+int main()
+{
+	fstream words;
+	words.open("C:\\Users\\kevin\\OneDrive\\Desktop\\Idea's for programs\\Finished projects\\C++\\WordList for anagram.txt");
+	string word;						//converts the list from file to vector wordList
+	vector<string> wordList;			//holds all the words
+	vector<string> newWordListHolder;			//holds the words that can be used as anagrams
+	vector<string> anagramList;
+	while (words >> word)
+	{
+		wordList.push_back(word);
+	}
+
+	srand(unsigned int(time(NULL)));
+
+	string temp;						//holds wordlist word
+	string anagram;						//holds final anagram for each user word
+	vector<string> userWord;
+
+	int size = wordList.size();
+	int randNum;
+	int count = 0;						//used to compare the letters of userword and the random word
+
+	userWord = wordSeperator();
+
+
+	for (unsigned int i = 0; i < userWord.size(); i++)			//this loop will check each word from the sentence
+	{
+		string temp2 = userWord[i];
+
+		for (unsigned int j = 0; j < wordList.size(); j++)						//this loop will use ever word randomly chosen to compare with each word in the sentence
+		{
+			randNum = randGen(size);
+			temp = wordList[randNum];
+
+			temp2 = userWord[i];												//once a new word from the wordlist is needed, reasign temp2 to the original word so that it has all it's undestroyed letters again
+			count = 0;															//reset count every time a new word from wordlist is needed
+
+
+			for (unsigned int k = 0; k < temp.length(); k++)					//this loop will compare the letters from randomly chosen from from the list with each word in the sentence
+			{
+				for (unsigned int o = 0; o < userWord[i].length(); o++)			//this loop for checking letters in each word from sentence
+				{
+
+					if (userWord[i].length() == 1 && wordList[j].length() > 1)	//this is for words that are just 1 letter long like a and I which will prevent new words being input other than their own because it will input any word that has that letter
+					{
+						newWordListHolder.push_back(userWord[i]);
+
+						break;
+					}
+
+					if (temp[k] == temp2[o])
+					{
+						count++;												//++ if letters are the same
+						temp[k] = ' ';											//destroys the letter if it's the same as the other
+						temp2[o] = '!';
+					}
+				}
+
+			}
+			if (count == wordList[randNum].length())
+			{
+				newWordListHolder.push_back(wordList[randNum]);
+
+				count = 0;
+			}
+
+			//RANDOMIZER FOR FINDING THE ANAGRAM
+			if ((newWordListHolder.size() == 10 || (j == (wordList.size() - 1)) && newWordListHolder.size() > 0))		//newWordList will hold at most 5 words that a userWord can anagram with then go to random gen to choose 1 of the 5 words to use (doesn't work)
+			{
+				anagram = randNewList(newWordListHolder);
+
+				int count = 0;
+				while (userWord[i].length() > 3 && anagram.length() < userWord[i].length())					//this helps prevent small words being used for large words
+				{
+					count++;
+					anagram = randNewList(newWordListHolder);
+					if (count == 3 || anagram.length() > 3)
+					{
+						break;
+					}
+				}
+
+				newWordListHolder.clear();
+				anagramList.push_back(anagram);
+				break;
+			}
+
+			if (anagramList.size() == userWord.size())		//anagramList should only hold the same amount of words as userWord
+			{
+				break;
+			}
+
+
+			count = 0;										//resets count so the next word can be checked with a fresh start
+			temp = wordList[randNum];
+			wordList[randNum] = wordList[size - 1];			// swaps the randnum word with the last word once it's been used and reduces size to prevent using it again
+			wordList[size - 1] = temp;
+			size -= 1;
+		}
+		temp2 = userWord[i];
+		size = wordList.size();
+
+		if (i < userWord.size() - 1)
+		{
+			userWord = truncator(temp2, anagram, i, userWord);
+		}
+
+	}
+	for (unsigned int i = 0; i < anagramList.size(); i++)			//printing the final words
+	{
+		cout << anagramList[i] << " ";
+	}
+}
+
+
+int randGen(int  size)
+{
+	int range = 0;
+	int randNum;
+	randNum = rand() % (size - range) + range;
+	return randNum;
+}
+
+vector<string> wordSeperator()
+{
+	vector <string> userWords;
+	string sentence;
+	string newWord;
+	cout << "enter a word or words" << endl;
+	getline(cin, sentence);
+	for (unsigned int i = 0; i < sentence.length(); i++)
+	{
+		if (sentence[i] != ' ')
+		{
+			newWord += sentence[i];
+		}
+		if (sentence[i] == ' ' || i + 1 == sentence.length())		//i+1 is the total length of sentence and if those 2 are equal then it will include the last word
+		{
+			userWords.push_back(newWord);							//newWord will append each letter of each word until it reaches a space and then put that word into the vector
+			newWord.clear();
+		}
+	}
+
+	return userWords;
+}
+
+
+string randNewList(vector<string> wordList)
+{
+	int range = 0;
+	string newWord;
+	int randNum;
+	randNum = rand() % (wordList.size() - range) + range;
+	newWord = wordList[randNum];
+
+	wordList.clear();			//pretty sure this doesn't clear the vector in main
+	return newWord;
+}
+
+vector<string> truncator(string word, string anagram, int element, vector<string> nextWord)
+{
+	int size = word.length();
+	for (unsigned int i = 0; i < anagram.length(); i++)
+	{
+		for (unsigned int j = 0; j < size; j++)
+		{
+			if (anagram[i] == word[j] && element < nextWord.size() - 1)			//element is the substrict of the userWord, and if it's == nextWord.size then it will be out of subscript
+			{
+				char temp = word[j];
+				word[j] = word[size - 1];
+				word[word.length() - 1] = temp;
+				size -= 1;
+			}
+		}
+	}
+	for (int i = 0; i < size; i++)
+	{
+		nextWord[element + 1] += word[i];
+	}
+
+	return nextWord;
+}
